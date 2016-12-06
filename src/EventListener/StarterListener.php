@@ -44,6 +44,7 @@ class StarterListener implements EventSubscriberInterface
         $request = $event->getRequest();
 
         $this->mailConfigCheck($request);
+        $this->developmentCheck();
         $this->liveCheck($request);
         $this->gdCheck();
     }
@@ -99,6 +100,18 @@ class StarterListener implements EventSubscriberInterface
         $notice = "It seems like this website is running on a <strong>non-development environment</strong>, while 'debug' is enabled. Make sure debug is disabled in production environments. Failure to do so will result in an extremely large <tt>app/cache</tt> folder and reduced performance.";
         $this->app['logger.flash']->configuration(Trans::__($notice));
     }
+
+    /**
+     * Check whether or not we're running an alpha, beta or RC, and warn about that.
+     */
+    protected function developmentCheck()
+    {
+        if (!Version::isStable()) {
+            $notice = "This is a <strong>development version of Bolt</strong>, so it might contain bugs and unfinished features. Use at your own risk! For 'production' websites, we advise you to stick with the official stable releases.";
+            $this->app['logger.flash']->configuration(Trans::__($notice));
+        }
+    }
+
 
     /**
      * Return the events to subscribe to.
