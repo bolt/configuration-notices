@@ -20,7 +20,7 @@
     },
     "autoload": {
         "psr-4": {
-            "Bolt\\": "src"
+            "Bolt\\Starter\\": "src"
         }
     },
     "extra": {
