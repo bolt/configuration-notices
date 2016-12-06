@@ -69,7 +69,7 @@ class StarterListener implements EventSubscriberInterface
                 'severity' => 1,
                 'notice'   => "The <strong>mail configuration parameters</strong> have not been set up. This may interfere with password resets, and extension functionality. Please set up the <tt>mailoptions</tt> in <tt>config.yml</tt>."
             ]);
-            $this->app['logger.flash']->configuration(Trans::__($notice));
+            $this->app['logger.flash']->configuration($notice);
         }
     }
 
