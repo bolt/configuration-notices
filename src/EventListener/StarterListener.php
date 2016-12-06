@@ -3,6 +3,7 @@
 namespace Bolt\Starter\EventListener;
 
 use Bolt\Translation\Translator as Trans;
+use Bolt\Version;
 use Silex\Application;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpFoundation\Request;
