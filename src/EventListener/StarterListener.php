@@ -65,8 +65,11 @@ class StarterListener implements EventSubscriberInterface
         }
 
         if (!$this->app['config']->get('general/mailoptions') && $this->app['users']->getCurrentuser() && $this->app['users']->isAllowed('files:config')) {
-            $notice = "The <strong>mail configuration parameters</strong> have not been set up. This may interfere with password resets, and extension functionality. Please set up the <tt>mailoptions</tt> in config.yml.";
-            $this->app['logger.flash']->configuration(Trans::__($notice));
+            $notice = json_encode([
+                'severity' => 1,
+                'notice'   => "The <strong>mail configuration parameters</strong> have not been set up. This may interfere with password resets, and extension functionality. Please set up the <tt>mailoptions</tt> in <tt>config.yml</tt>."
+            ]);
+            $this->app['logger.flash']->configuration($notice);
         }
     }
 
@@ -76,8 +79,11 @@ class StarterListener implements EventSubscriberInterface
     protected function gdCheck()
     {
         if (!function_exists('imagecreatetruecolor')) {
-            $notice = "The current version of PHP doesn't have the <strong>GD library enabled</strong>. Without this, Bolt will not be able to generate thumbnails. Please enable <tt>php-gd</tt>, or ask your system-administrator to do so.";
-            $this->app['logger.flash']->configuration(Trans::__($notice));
+            $notice = json_encode([
+                'severity' => 1,
+                'notice'   => "The current version of PHP doesn't have the <strong>GD library enabled</strong>. Without this, Bolt will not be able to generate thumbnails. Please enable <tt>php-gd</tt>, or ask your system-administrator to do so."
+            ]);
+            $this->app['logger.flash']->configuration($notice);
         }
     }
 
@@ -93,13 +99,25 @@ class StarterListener implements EventSubscriberInterface
 
         $host = $request->getHttpHost();
         $domainpartials = $this->app['config']->get('general/debug_local_domains', []);
+
+        $domainpartials = array_unique(array_merge(
+            (array) $domainpartials,
+            ['.dev', 'dev.', 'devel.', 'development.', 'test.', '.test', 'new.', '.new', 'localhost', '.local', 'local.']
+        ));
+
         foreach ($domainpartials as $partial) {
             if (strpos($host, $partial) !== false) {
                 return;
             }
         }
-        $notice = "It seems like this website is running on a <strong>non-development environment</strong>, while 'debug' is enabled. Make sure debug is disabled in production environments. Failure to do so will result in an extremely large <tt>app/cache</tt> folder and reduced performance.";
-        $this->app['logger.flash']->configuration(Trans::__($notice));
+
+        $notice = json_encode([
+            'severity' => 2,
+            'notice'   => "It seems like this website is running on a <strong>non-development environment</strong>, while 'debug' is enabled. Make sure debug is disabled in production environments. If you don't do this, it will result in an extremely large <tt>app/cache</tt> folder and a measurable reduced performance across all pages.",
+            'info'     => "If you wish to hide this message, add a key to your <tt>config.yml</tt> with a (partial) domain name in it, that should be seen as a development environment: <tt>debug_local_domains: [ '.foo' ]</tt>."
+        ]);
+
+        $this->app['logger.flash']->configuration($notice);
     }
 
     /**
@@ -108,8 +126,13 @@ class StarterListener implements EventSubscriberInterface
     protected function developmentCheck()
     {
         if (!Version::isStable()) {
-            $notice = "This is a <strong>development version of Bolt</strong>, so it might contain bugs and unfinished features. Use at your own risk! For 'production' websites, we advise you to stick with the official stable releases.";
-            $this->app['logger.flash']->configuration(Trans::__($notice));
+
+            $notice = json_encode([
+                'severity' => 1,
+                'notice'   => "This is a <strong>development version of Bolt</strong>, so it might contain bugs and unfinished features. Use at your own risk! ",
+                'info'     => "For 'production' websites, we advise you to stick with the official stable releases."
+            ]);
+            $this->app['logger.flash']->configuration($notice);
         }
     }
 
