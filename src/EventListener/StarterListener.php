@@ -1,6 +1,6 @@
 <?php
 
-namespace Bolt\Starter\EventListener;
+namespace Bolt\ConfigurationNotices\EventListener;
 
 use Bolt\Translation\Translator as Trans;
 use Bolt\Version;
@@ -16,7 +16,7 @@ use Symfony\Component\HttpKernel\KernelEvents;
  * @author Gawain Lynch <gawain.lynch@gmail.com>
  *         Bob den Otter <bob@twokings.nl>
  */
-class StarterListener implements EventSubscriberInterface
+class ConfigurationNoticesListener implements EventSubscriberInterface
 {
     /** @var \Silex\Application $app */
     protected $app;

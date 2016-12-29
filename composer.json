@@ -24,7 +24,7 @@
     },
     "autoload": {
         "psr-4": {
-            "Bolt\\Starter\\": "src"
+            "Bolt\\ConfigurationNotices\\": "src"
         }
     },
     "extra": {
