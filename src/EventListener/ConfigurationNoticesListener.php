@@ -43,19 +43,19 @@ class ConfigurationNoticesListener implements EventSubscriberInterface
             return;
         }
 
-        $this->request = $event->getRequest();
+        $request = $event->getRequest();
 
         // Only do these 'expensive' checks on the dashboard.
-        if ($this->request->get('_route') !== 'dashboard') {
+        if ($request->get('_route') !== 'dashboard') {
             return;
         }
 
         $this->mailConfigCheck();
         $this->developmentCheck();
-        $this->liveCheck();
+        $this->liveCheck($request);
         $this->gdCheck();
         $this->thumbsFolderCheck();
-        $this->canonicalCheck();
+        $this->canonicalCheck($request);
     }
 
     /**
@@ -93,13 +93,13 @@ class ConfigurationNoticesListener implements EventSubscriberInterface
     /**
      * Check whether the site is live or not.
      */
-    protected function liveCheck()
+    protected function liveCheck(Request $request)
     {
         if (!$this->app['debug']) {
             return;
         }
 
-        $host = $this->request->getHttpHost();
+        $host = $request->getHttpHost();
         $domainpartials = $this->app['config']->get('general/debug_local_domains', []);
 
         $domainpartials = array_unique(array_merge(
@@ -171,9 +171,9 @@ class ConfigurationNoticesListener implements EventSubscriberInterface
     /**
      * Check if the current url matches the canonical.
      */
-    protected function canonicalCheck()
+    protected function canonicalCheck(Request $request)
     {
-        $hostname = strtok($this->request->getUri(), '?');
+        $hostname = strtok($request->getUri(), '?');
         $canonical = $this->app['canonical']->getUrl();
 
         if (!empty($canonical) && ($hostname != $canonical)) {
