@@ -1,18 +1,18 @@
 <?php
 
-namespace Bolt\Starter\Provider;
+namespace Bolt\ConfigurationNotices\Provider;
 
-use Bolt\Starter\EventListener\StarterListener;
+use Bolt\ConfigurationNotices\EventListener\ConfigurationNoticesListener;
 use Silex\Application;
 use Silex\ServiceProviderInterface;
 use Symfony\Component\EventDispatcher\Debug\TraceableEventDispatcherInterface;
 
 /**
- * Starter-kit service provider.
+ * Configuration Notices service provider.
  *
  * @author Gawain Lynch <gawain.lynch@gmail.com>
  */
-class StarterProvider implements ServiceProviderInterface
+class ConfigurationNoticesProvider implements ServiceProviderInterface
 {
     /**
      * {@inheritdoc}
@@ -28,6 +28,6 @@ class StarterProvider implements ServiceProviderInterface
     {
         /** @var TraceableEventDispatcherInterface $dispatcher */
         $dispatcher = $app['dispatcher'];
-        $dispatcher->addSubscriber(new StarterListener($app));
+        $dispatcher->addSubscriber(new ConfigurationNoticesListener($app));
     }
 }
