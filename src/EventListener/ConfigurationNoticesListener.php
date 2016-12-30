@@ -38,7 +38,7 @@ class ConfigurationNoticesListener implements EventSubscriberInterface
      */
     public function onKernelRequest(GetResponseEvent $event)
     {
-        // Nothing to do here, if it's nort the Master request.
+        // Nothing to do here, if it's not the Master request.
         if (!$event->isMasterRequest()) {
             return;
         }
