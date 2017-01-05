@@ -192,7 +192,7 @@ class ConfigurationNoticesListener implements EventSubscriberInterface
     }
 
     /**
-     * Check if the php-exif, fileinfo and php-gd are enabled.
+     * Check if the exif, fileinfo and gd extensions are enabled / compiled into PHP.
      */
     protected function imageFunctionsCheck()
     {
@@ -217,7 +217,7 @@ class ConfigurationNoticesListener implements EventSubscriberInterface
         if (!extension_loaded('gd') || !function_exists('gd_info')) {
             $notice = json_encode([
                 'severity' => 1,
-                'notice'   => "The class <tt>finfo</tt> does not exist, which means that Bolt can not create thumbnail images.",
+                'notice'   => "The function <tt>gd_info</tt> does not exist, which means that Bolt can not create thumbnail images.",
                 'info'     => "Make sure the <tt>gd</tt> extension is enabled and/or compiled into your PHP setup. See <a href='http://php.net/manual/en/image.installation.php'>here</a>."
             ]);
             $this->app['logger.flash']->configuration($notice);
