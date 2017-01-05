@@ -56,6 +56,7 @@ class ConfigurationNoticesListener implements EventSubscriberInterface
         $this->gdCheck();
         $this->thumbsFolderCheck();
         $this->canonicalCheck($request);
+        $this->imageFunctionsCheck();
     }
 
     /**
@@ -185,6 +186,39 @@ class ConfigurationNoticesListener implements EventSubscriberInterface
                     $this->app['canonical']->getUrl(),
                     $this->app['canonical']->getUrl()
                 )
+            ]);
+            $this->app['logger.flash']->configuration($notice);
+        }
+    }
+
+    /**
+     * Check if the php-exif, fileinfo and php-gd are enabled.
+     */
+    protected function imageFunctionsCheck()
+    {
+        if (!extension_loaded('exif') || !function_exists('exif_read_data')) {
+            $notice = json_encode([
+                'severity' => 1,
+                'notice'   => "The function <tt>exif_read_data</tt> does not exist, which means that Bolt can not create thumbnail images.",
+                'info'     => "Make sure the <tt>php-exif</tt> extension is enabled and/or compiled into your PHP setup. See <a href='http://php.net/manual/en/exif.installation.php'>here</a>."
+            ]);
+            $this->app['logger.flash']->configuration($notice);
+        }
+
+        if (!extension_loaded('fileinfo') || !class_exists('finfo')) {
+            $notice = json_encode([
+                'severity' => 1,
+                'notice'   => "The class <tt>finfo</tt> does not exist, which means that Bolt can not create thumbnail images.",
+                'info'     => "Make sure the <tt>fileinfo</tt> extension is enabled and/or compiled into your PHP setup. See <a href='http://php.net/manual/en/fileinfo.installation.php'>here</a>."
+            ]);
+            $this->app['logger.flash']->configuration($notice);
+        }
+
+        if (!extension_loaded('gd') || !function_exists('gd_info')) {
+            $notice = json_encode([
+                'severity' => 1,
+                'notice'   => "The class <tt>finfo</tt> does not exist, which means that Bolt can not create thumbnail images.",
+                'info'     => "Make sure the <tt>gd</tt> extension is enabled and/or compiled into your PHP setup. See <a href='http://php.net/manual/en/image.installation.php'>here</a>."
             ]);
             $this->app['logger.flash']->configuration($notice);
         }
