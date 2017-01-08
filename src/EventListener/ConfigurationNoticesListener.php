@@ -57,6 +57,7 @@ class ConfigurationNoticesListener implements EventSubscriberInterface
         $this->thumbsFolderCheck();
         $this->canonicalCheck($request);
         $this->imageFunctionsCheck();
+        $this->maintenanceCheck();
     }
 
     /**
@@ -219,6 +220,21 @@ class ConfigurationNoticesListener implements EventSubscriberInterface
                 'severity' => 1,
                 'notice'   => "The function <tt>gd_info</tt> does not exist, which means that Bolt can not create thumbnail images.",
                 'info'     => "Make sure the <tt>gd</tt> extension is enabled and/or compiled into your PHP setup. See <a href='http://php.net/manual/en/image.installation.php'>here</a>."
+            ]);
+            $this->app['logger.flash']->configuration($notice);
+        }
+    }
+
+    /**
+     * If the site is in maintenance mode, show this on the dashboard.
+     */
+    protected function maintenanceCheck()
+    {
+        if ($this->app['config']->get('general/maintenance_mode', false)) {
+            $notice = json_encode([
+                'severity' => 1,
+                'notice'   => "Bolt's <strong>maintenance mode</strong> is enabled. This means that non-authenticated users will not be able to see the website.",
+                'info'     => "To make the site available to the general public again, set <tt>maintenance_mode: false</tt> in your <tt>config.yml</tt> file."
             ]);
             $this->app['logger.flash']->configuration($notice);
         }
