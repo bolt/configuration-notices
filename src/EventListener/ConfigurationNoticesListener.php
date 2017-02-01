@@ -181,7 +181,7 @@ class ConfigurationNoticesListener implements EventSubscriberInterface
         if (!empty($canonical) && ($hostname != $canonical)) {
             $notice = json_encode([
                 'severity' => 1,
-                'notice'   => "The <tt>canonical hostname</tt> is set to $canonical in <tt>config.yml</tt>, but you are currently logged in using another hostname. This might cause issues with uploaded files, or links inserted in the content.",
+                'notice'   => "The <tt>canonical hostname</tt> is set to <tt>$canonical</tt> in <tt>config.yml</tt>, but you are currently logged in using another hostname. This might cause issues with uploaded files, or links inserted in the content.",
                 'info'     => sprintf(
                     "Log in on Bolt using the proper URL: <tt><a href='%s'>%s</a></tt>.",
                     $this->app['canonical']->getUrl(),
