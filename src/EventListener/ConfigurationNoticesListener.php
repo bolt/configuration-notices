@@ -45,8 +45,8 @@ class ConfigurationNoticesListener implements EventSubscriberInterface
 
         $request = $event->getRequest();
 
-        // Only do these 'expensive' checks on the dashboard and login screen.
-        if (!in_array($request->get('_route'), ['dashboard', 'login'])) {
+        // Only do these 'expensive' checks on a select few backend pages.
+        if (!in_array($request->get('_route'), ['dashboard', 'login', 'userfirst'])) {
             return;
         }
 
@@ -161,7 +161,7 @@ class ConfigurationNoticesListener implements EventSubscriberInterface
             ]);
 
             $this->app['logger.flash']->configuration($notice);
-            if ($this->app['request']->get('_route') == "login") {
+            if (in_array($this->app['request']->get('_route'), ['login', 'userfirst'])) {
                 $this->app['logger.flash']->error($message . ' ' . $info);
             }
         }
@@ -186,7 +186,7 @@ class ConfigurationNoticesListener implements EventSubscriberInterface
             ]);
 
             $this->app['logger.flash']->configuration($notice);
-            if ($this->app['request']->get('_route') == "login") {
+            if (in_array($this->app['request']->get('_route'), ['login', 'userfirst'])) {
                 $this->app['logger.flash']->error($message . ' ' . $info);
             }
         }
