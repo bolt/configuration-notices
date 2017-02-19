@@ -45,14 +45,17 @@ class ConfigurationNoticesListener implements EventSubscriberInterface
 
         $request = $event->getRequest();
 
-        // Only do these 'expensive' checks on the dashboard.
-        if ($request->get('_route') !== 'dashboard') {
+        // Only do these 'expensive' checks on a select few backend pages.
+        if (!in_array($request->get('_route'), ['dashboard', 'login', 'userfirst'])) {
             return;
         }
 
         $this->mailConfigCheck();
         $this->developmentCheck();
         $this->liveCheck($request);
+        $this->singleHostnameCheck($request);
+        $this->ipAddressCheck($request);
+        $this->topLevelCheck($request);
         $this->gdCheck();
         $this->thumbsFolderCheck();
         $this->canonicalCheck($request);
@@ -90,7 +93,6 @@ class ConfigurationNoticesListener implements EventSubscriberInterface
             $this->app['logger.flash']->configuration($notice);
         }
     }
-
 
     /**
      * Check whether the site is live or not.
@@ -133,9 +135,78 @@ class ConfigurationNoticesListener implements EventSubscriberInterface
 
             $notice = json_encode([
                 'severity' => 1,
-                'notice'   => "This is a <strong>development version of Bolt</strong>, so it might contain bugs and unfinished features. Use at your own risk! ",
+                'notice'   => "This is a <strong>development version of Bolt</strong>, so it might contain bugs and unfinished features. Use at your own risk!",
                 'info'     => "For 'production' websites, we advise you to stick with the official stable releases."
             ]);
+            $this->app['logger.flash']->configuration($notice);
+        }
+    }
+
+    /**
+     * Check whether or not we're running on a hostname without TLD, like 'http://localhost'.
+     */
+    protected function singleHostnameCheck(Request $request)
+    {
+        $hostname = $request->getHttpHost();
+
+        if (strpos($hostname, '.') === false) {
+
+            $message = "You are using <tt>$hostname</tt> as host name. Some browsers have problems with sessions on hostnames that do not have a <tt>.tld</tt> in them.";
+            $info = "If you experience difficulties logging on, either confure your webserver to use a hostname with a dot in it, or use another browser.";
+
+            $notice = json_encode([
+                'severity' => 1,
+                'notice'   => $message,
+                'info'     => $info
+            ]);
+
+            $this->app['logger.flash']->configuration($notice);
+            if (in_array($this->app['request']->get('_route'), ['login', 'userfirst'])) {
+                $this->app['logger.flash']->error($message . ' ' . $info);
+            }
+        }
+    }
+
+    /**
+     * Check whether or not we're running on a hostname without TLD, like 'http://localhost'.
+     */
+    protected function ipAddressCheck(Request $request)
+    {
+        $hostname = $request->getHttpHost();
+
+        if (filter_var($hostname, FILTER_VALIDATE_IP)) {
+
+            $message = "You are using the <strong>IP address</strong> <tt>$hostname</tt> as host name. This is known to cause problems with sessions.";
+            $info = "If you experience difficulties logging on, either confure your webserver to use a proper hostname, or use another browser.";
+
+            $notice = json_encode([
+                'severity' => 1,
+                'notice'   => $message,
+                'info'     => $info
+            ]);
+
+            $this->app['logger.flash']->configuration($notice);
+            if (in_array($this->app['request']->get('_route'), ['login', 'userfirst'])) {
+                $this->app['logger.flash']->error($message . ' ' . $info);
+            }
+        }
+    }
+
+    /**
+     * Check whether or not we're running on a hostname without TLD, like 'http://localhost'.
+     */
+    protected function topLevelCheck(Request $request)
+    {
+        $base = $request->getBaseUrl();
+
+        if (!empty($base)) {
+
+            $notice = json_encode([
+                'severity' => 1,
+                'notice'   => "You are using Bolt in a subfolder, instead of the webroot.",
+                'info'     => "It is recommended to use Bolt from the 'web root', so that it is in the top level. If you wish to use Bolt for only part of a website, we recommend setting up a subdomain like <tt>news.example.org</tt>. If you are having trouble setting up Bolt in the top level, look into the <a href='https://docs.bolt.cm/howto/troubleshooting-outside-webroot#option-2-use-the-flat-structure-distribution'>Flat Structure</a> distribution, or one of the other options listed on that page."
+            ]);
+
             $this->app['logger.flash']->configuration($notice);
         }
     }
