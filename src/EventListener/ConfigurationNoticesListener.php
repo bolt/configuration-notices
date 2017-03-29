@@ -57,7 +57,9 @@ class ConfigurationNoticesListener implements EventSubscriberInterface
         $this->ipAddressCheck($request);
         $this->topLevelCheck($request);
         $this->gdCheck();
+        $this->writableFolderCheck();
         $this->thumbsFolderCheck();
+        $this->canonicalCheck($request);
         $this->imageFunctionsCheck();
         $this->maintenanceCheck();
     }
@@ -202,13 +204,56 @@ class ConfigurationNoticesListener implements EventSubscriberInterface
 
             $notice = json_encode([
                 'severity' => 1,
-                'notice'   => "You are using Bolt in a subfolder, instead of the webroot.",
+                'notice'   => "You are using Bolt in a subfolder, <strong>instead of the webroot</strong>.",
                 'info'     => "It is recommended to use Bolt from the 'web root', so that it is in the top level. If you wish to use Bolt for only part of a website, we recommend setting up a subdomain like <tt>news.example.org</tt>. If you are having trouble setting up Bolt in the top level, look into the <a href='https://docs.bolt.cm/howto/troubleshooting-outside-webroot#option-2-use-the-flat-structure-distribution'>Flat Structure</a> distribution, or one of the other options listed on that page."
             ]);
 
             $this->app['logger.flash']->configuration($notice);
         }
     }
+
+
+    /**
+     * Check if some common file locations are writable.
+     */
+    protected function writableFolderCheck()
+    {
+        $filename = '/configtester_' . date('Y-m-d-h-i-s') . '.txt';
+
+        $folders = [
+            ['filesystem' => 'web', 'folder' => 'files', 'name' => '<tt>files/</tt> in the webroot'],
+            ['filesystem' => 'web', 'folder' => 'extensions', 'name' => '<tt>extensions/</tt> in the webroot'],
+            ['filesystem' => 'app', 'folder' => 'config', 'name' => '<tt>app/config/</tt>'],
+            ['filesystem' => 'app', 'folder' => 'cache', 'name' => '<tt>app/cache/</tt>']
+        ];
+
+        if ($this->app['config']->get('general/database/driver') == "pdo_sqlite") {
+            $folders[] = ['filesystem' => 'app', 'folder' => 'database', 'name' => '<tt>app/cache/</tt>'];
+        }
+
+        // dump($folders);
+
+        foreach($folders as $folder) {
+            try {
+                $fs = $this->app['filesystem']->getFilesystem($folder['filesystem']);
+                $fs->put($folder['folder'] . $filename, 'ok');
+                $contents = $fs->read($folder['folder'] . $filename);
+                $fs->delete($folder['folder'] . $filename);
+            } catch (\Exception $e) {
+                $contents = false;
+            }
+
+            if ($contents != 'ok') {
+                $notice = json_encode([
+                    'severity' => 1,
+                    'notice'   => "Bolt needs to be able to <strong>write files to</strong> the folder " . $folder['name'] . ", but it doesn't seem to be writable.",
+                    'info'     => "Make sure the folder exists, and is writable to the webserver."
+                ]);
+                $this->app['logger.flash']->configuration($notice);
+            }
+        }
+    }
+
 
     /**
      * Check if the thumbs/ folder is writable, if `save_files: true`
@@ -235,6 +280,28 @@ class ConfigurationNoticesListener implements EventSubscriberInterface
                 'severity' => 1,
                 'notice'   => "Bolt is configured to save thumbnails to disk for performance, but the <tt>thumbs/</tt> folder doesn't seem to be writable.",
                 'info'     => "Make sure the folder exists, and is writable to the webserver."
+            ]);
+            $this->app['logger.flash']->configuration($notice);
+        }
+    }
+
+    /**
+     * Check if the current url matches the canonical.
+     */
+    protected function canonicalCheck(Request $request)
+    {
+        $hostname = strtok($request->getUri(), '?');
+        $canonical = $this->app['canonical']->getUrl();
+
+        if (!empty($canonical) && ($hostname != $canonical)) {
+            $notice = json_encode([
+                'severity' => 1,
+                'notice'   => "The <tt>canonical hostname</tt> is set to <tt>$canonical</tt> in <tt>config.yml</tt>, but you are currently logged in using another hostname. This might cause issues with uploaded files, or links inserted in the content.",
+                'info'     => sprintf(
+                    "Log in on Bolt using the proper URL: <tt><a href='%s'>%s</a></tt>.",
+                    $this->app['canonical']->getUrl(),
+                    $this->app['canonical']->getUrl()
+                )
             ]);
             $this->app['logger.flash']->configuration($notice);
         }
