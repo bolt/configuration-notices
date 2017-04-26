@@ -2,7 +2,6 @@
 
 namespace Bolt\ConfigurationNotices\EventListener;
 
-use Bolt\Translation\Translator as Trans;
 use Bolt\Version;
 use Silex\Application;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -234,15 +233,9 @@ class ConfigurationNoticesListener implements EventSubscriberInterface
         // dump($folders);
 
         foreach($folders as $folder) {
-            try {
-                $fs = $this->app['filesystem']->getFilesystem($folder['filesystem']);
-                $fs->put($folder['folder'] . $filename, 'ok');
-                $contents = $fs->read($folder['folder'] . $filename);
-                $fs->delete($folder['folder'] . $filename);
-            } catch (\Exception $e) {
-                $contents = false;
-            }
-
+            $mountPoint = $folder['filesystem'];
+            $filePath = $folder['folder'] . $filename;
+            $contents = $this->isWritable($mountPoint, $filePath);
             if ($contents != 'ok') {
                 $notice = json_encode([
                     'severity' => 1,
@@ -264,17 +257,8 @@ class ConfigurationNoticesListener implements EventSubscriberInterface
             return;
         }
 
-        $filename = '/thumbs/configtester_' . date('Y-m-d-h-i-s') . '.txt';
-
-        try {
-            $fs = $this->app['filesystem']->getFilesystem('web');
-            $fs->put($filename, 'ok');
-            $contents = $fs->read($filename);
-            $fs->delete($filename);
-        } catch (\Exception $e) {
-            $contents = false;
-        }
-
+        $filePath = '/thumbs/configtester_' . date('Y-m-d-h-i-s') . '.txt';
+        $contents = $this->isWritable('web', $filePath);
         if ($contents != 'ok') {
             $notice = json_encode([
                 'severity' => 1,
@@ -353,6 +337,28 @@ class ConfigurationNoticesListener implements EventSubscriberInterface
             ]);
             $this->app['logger.flash']->configuration($notice);
         }
+    }
+
+    /**
+     * @param string $mountPoint
+     * @param string $filePath
+     *
+     * @return bool|string
+     */
+    private function isWritable($mountPoint, $filePath)
+    {
+        /** @var \Bolt\Filesystem\FilesystemInterface $fs */
+        $fs = $this->app['filesystem']->getFilesystem($mountPoint);
+
+        try {
+            $fs->put($filePath, 'ok');
+            $contents = $fs->read($filePath);
+            $fs->delete($filePath);
+        } catch (\Exception $e) {
+            return false;
+        }
+
+        return $contents;
     }
 
     /**
