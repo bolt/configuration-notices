@@ -2,6 +2,8 @@
 
 namespace Bolt\ConfigurationNotices\EventListener;
 
+use Bolt\Storage\Entity\LogChange;
+use Bolt\Storage\Entity\LogSystem;
 use Bolt\Version;
 use Silex\Application;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -19,6 +21,10 @@ class ConfigurationNoticesListener implements EventSubscriberInterface
 {
     /** @var \Silex\Application $app */
     protected $app;
+
+    protected $logThreshold = null;
+
+    protected $defaultDomainPartials = ['.dev', 'dev.', 'devel.', 'development.', 'test.', '.test', 'new.', '.new', '.local', 'local.'];
 
     /**
      * Constructor function.
@@ -49,6 +55,10 @@ class ConfigurationNoticesListener implements EventSubscriberInterface
             return;
         }
 
+        $this->logThreshold = $this->app['config']->get('general/configuration_notices/log_threshold', 10000);
+
+        $this->app['stopwatch']->start('bolt.configuration_notices');
+
         $this->mailConfigCheck();
         $this->developmentCheck();
         $this->liveCheck($request);
@@ -61,6 +71,11 @@ class ConfigurationNoticesListener implements EventSubscriberInterface
         $this->canonicalCheck($request);
         $this->imageFunctionsCheck();
         $this->maintenanceCheck();
+        $this->changelogCheck();
+        $this->systemlogCheck();
+        $this->thumbnailConfigCheck();
+
+        $this->app['stopwatch']->stop('bolt.configuration_notices');
     }
 
     /**
@@ -104,11 +119,11 @@ class ConfigurationNoticesListener implements EventSubscriberInterface
         }
 
         $host = $request->getHttpHost();
-        $domainpartials = $this->app['config']->get('general/debug_local_domains', []);
+        $domainpartials = (array) $this->app['config']->get('general/configuration_notices/local_domains', []);
 
         $domainpartials = array_unique(array_merge(
             (array) $domainpartials,
-            ['.dev', 'dev.', 'devel.', 'development.', 'test.', '.test', 'new.', '.new', 'localhost', '.local', 'local.']
+            $this->defaultDomainPartials
         ));
 
         foreach ($domainpartials as $partial) {
@@ -230,8 +245,6 @@ class ConfigurationNoticesListener implements EventSubscriberInterface
             $folders[] = ['filesystem' => 'app', 'folder' => 'database', 'name' => '<tt>app/cache/</tt>'];
         }
 
-        // dump($folders);
-
         foreach($folders as $folder) {
             $mountPoint = $folder['filesystem'];
             $filePath = $folder['folder'] . $filename;
@@ -246,7 +259,6 @@ class ConfigurationNoticesListener implements EventSubscriberInterface
             }
         }
     }
-
 
     /**
      * Check if the thumbs/ folder is writable, if `save_files: true`
@@ -334,6 +346,79 @@ class ConfigurationNoticesListener implements EventSubscriberInterface
                 'severity' => 1,
                 'notice'   => "Bolt's <strong>maintenance mode</strong> is enabled. This means that non-authenticated users will not be able to see the website.",
                 'info'     => "To make the site available to the general public again, set <tt>maintenance_mode: false</tt> in your <tt>config.yml</tt> file."
+            ]);
+            $this->app['logger.flash']->configuration($notice);
+        }
+    }
+
+    /**
+     * Check if Changelog is enabled, and if doesn't contain too many rows.
+     */
+    protected function changelogCheck()
+    {
+        if (!$this->app['config']->get('general/changelog/enabled', false)) {
+            return;
+        }
+
+        // Get the number of items in the changelog
+        $count = $this->app['storage']->getRepository(LogChange::class)->count();
+
+        if ($count > $this->logThreshold) {
+            $message = sprintf(
+                "Bolt's <strong>changelog</strong> is enabled, and there are more than %s rows in the table.",
+                $this->logThreshold
+            );
+            $info = sprintf(
+                "Be sure to clean it up periodically, using a Cron job or on the <a href='%s'>Changelog page</a>.",
+                $this->app['url_generator']->generate('changelog')
+            );
+            $notice = json_encode([
+                'severity' => 1,
+                'notice'   => $message,
+                'info'     => $info
+            ]);
+            $this->app['logger.flash']->configuration($notice);
+        }
+    }
+
+    /**
+     * Check if systemlog doesn't contain too many rows.
+     */
+    protected function systemlogCheck()
+    {
+        // Get the number of items in the changelog
+        $count = $this->app['storage']->getRepository(LogSystem::class)->count();
+
+        if ($count > $this->logThreshold) {
+            $message = sprintf(
+                "Bolt's <strong>systemlog</strong> is enabled, and there are more than %s rows in the table.",
+                $this->logThreshold
+            );
+            $info = sprintf(
+                "Be sure to clean it up periodically, using a Cron job or on the <a href='%s'>Systemlog page</a>.",
+                $this->app['url_generator']->generate('systemlog')
+            );
+            $notice = json_encode([
+                'severity' => 1,
+                'notice'   => $message,
+                'info'     => $info
+            ]);
+            $this->app['logger.flash']->configuration($notice);
+        }
+    }
+
+    /**
+     * Check if the thumbnail config has been updated for 3.3+ .
+     */
+    protected function thumbnailConfigCheck()
+    {
+        $thumbConfig = $this->app['config']->get('general/thumbnails');
+
+        if ((strpos($thumbConfig['notfound_image'] . $thumbConfig['error_image'], '://') === false)) {
+            $notice = json_encode([
+                'severity' => 1,
+                'notice'   => "Your configuration settings for <code>thumbnails/notfound_image</code> or <code>thumbnails/error_image</code> contain a value that needs to be updated.",
+                'info'     => "Update the value with a namespace, for example: <code>bolt_assets://img/default_notfound.png</code>."
             ]);
             $this->app['logger.flash']->configuration($notice);
         }
