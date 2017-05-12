@@ -22,7 +22,7 @@ class ConfigurationNoticesListener implements EventSubscriberInterface
     /** @var \Silex\Application $app */
     protected $app;
 
-    protected $lotsOfRecords = null;
+    protected $logThreshold = null;
 
     protected $defaultDomainPartials = ['.dev', 'dev.', 'devel.', 'development.', 'test.', '.test', 'new.', '.new', '.local', 'local.'];
 
@@ -55,7 +55,7 @@ class ConfigurationNoticesListener implements EventSubscriberInterface
             return;
         }
 
-        $this->lotsOfRecords = $this->app['config']->get('general/configuration_notices/lotsofrecords', 10000);
+        $this->logThreshold = $this->app['config']->get('general/configuration_notices/log_threshold', 10000);
 
         $this->app['stopwatch']->start('bolt.configuration_notices');
 
@@ -226,6 +226,7 @@ class ConfigurationNoticesListener implements EventSubscriberInterface
         }
     }
 
+
     /**
      * Check if some common file locations are writable.
      */
@@ -360,12 +361,12 @@ class ConfigurationNoticesListener implements EventSubscriberInterface
         }
 
         // Get the number of items in the changelog
-        $count = $this->app['storage']->getRepository(LogChange::class)->countChangeLog();
+        $count = $this->app['storage']->getRepository(LogChange::class)->count();
 
-        if ($count > $this->lotsOfRecords) {
+        if ($count > $this->logThreshold) {
             $message = sprintf(
                 "Bolt's <strong>changelog</strong> is enabled, and there are more than %s rows in the table.",
-                $this->lotsOfRecords
+                $this->logThreshold
             );
             $info = sprintf(
                 "Be sure to clean it up periodically, using a Cron job or on the <a href='%s'>Changelog page</a>.",
@@ -386,12 +387,12 @@ class ConfigurationNoticesListener implements EventSubscriberInterface
     protected function systemlogCheck()
     {
         // Get the number of items in the changelog
-        $count = $this->app['storage']->getRepository(LogSystem::class)->countSystemLog();
+        $count = $this->app['storage']->getRepository(LogSystem::class)->count();
 
-        if ($count > $this->lotsOfRecords) {
+        if ($count > $this->logThreshold) {
             $message = sprintf(
                 "Bolt's <strong>systemlog</strong> is enabled, and there are more than %s rows in the table.",
-                $this->lotsOfRecords
+                $this->logThreshold
             );
             $info = sprintf(
                 "Be sure to clean it up periodically, using a Cron job or on the <a href='%s'>Systemlog page</a>.",
