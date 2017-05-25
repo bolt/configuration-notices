@@ -49,9 +49,10 @@ class ConfigurationNoticesListener implements EventSubscriberInterface
         }
 
         $request = $event->getRequest();
+        $route = $request->get('_route');
 
         // Only do these 'expensive' checks on a select few backend pages.
-        if (!in_array($request->get('_route'), ['dashboard', 'login', 'userfirst'])) {
+        if (!in_array($route, ['dashboard', 'login', 'userfirst'])) {
             return;
         }
 
@@ -59,21 +60,25 @@ class ConfigurationNoticesListener implements EventSubscriberInterface
 
         $this->app['stopwatch']->start('bolt.configuration_notices');
 
-        $this->mailConfigCheck();
-        $this->developmentCheck();
-        $this->liveCheck($request);
         $this->singleHostnameCheck($request);
         $this->ipAddressCheck($request);
         $this->topLevelCheck($request);
-        $this->gdCheck();
         $this->writableFolderCheck();
-        $this->thumbsFolderCheck();
-        $this->canonicalCheck($request);
-        $this->imageFunctionsCheck();
-        $this->maintenanceCheck();
-        $this->changelogCheck();
-        $this->systemlogCheck();
-        $this->thumbnailConfigCheck();
+
+        // Do these only when logged in, on the dashboard
+        if ($route === 'dashboard') {
+            $this->mailConfigCheck();
+            $this->developmentCheck();
+            $this->liveCheck($request);
+            $this->gdCheck();
+            $this->thumbsFolderCheck();
+            $this->canonicalCheck($request);
+            $this->imageFunctionsCheck();
+            $this->maintenanceCheck();
+            $this->thumbnailConfigCheck();
+            $this->changelogCheck();
+            $this->systemlogCheck();
+        }
 
         $this->app['stopwatch']->stop('bolt.configuration_notices');
     }
@@ -167,7 +172,7 @@ class ConfigurationNoticesListener implements EventSubscriberInterface
         if (strpos($hostname, '.') === false) {
 
             $message = "You are using <tt>$hostname</tt> as host name. Some browsers have problems with sessions on hostnames that do not have a <tt>.tld</tt> in them.";
-            $info = "If you experience difficulties logging on, either confure your webserver to use a hostname with a dot in it, or use another browser.";
+            $info = "If you experience difficulties logging on, either configure your webserver to use a hostname with a dot in it, or use another browser.";
 
             $notice = json_encode([
                 'severity' => 1,
@@ -192,7 +197,7 @@ class ConfigurationNoticesListener implements EventSubscriberInterface
         if (filter_var($hostname, FILTER_VALIDATE_IP)) {
 
             $message = "You are using the <strong>IP address</strong> <tt>$hostname</tt> as host name. This is known to cause problems with sessions.";
-            $info = "If you experience difficulties logging on, either confure your webserver to use a proper hostname, or use another browser.";
+            $info = "If you experience difficulties logging on, either configure your webserver to use a proper hostname, or use another browser.";
 
             $notice = json_encode([
                 'severity' => 1,
