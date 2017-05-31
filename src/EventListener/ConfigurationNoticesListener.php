@@ -123,7 +123,13 @@ class ConfigurationNoticesListener implements EventSubscriberInterface
             return;
         }
 
-        $host = $request->getHttpHost();
+        $host = parse_url($request->getHttpHost());
+
+        // If we have an IP-address, we assume it's "dev"
+        if (filter_var($host['host'], FILTER_VALIDATE_IP) !== false) {
+            return;
+        }
+
         $domainpartials = (array) $this->app['config']->get('general/configuration_notices/local_domains', []);
 
         $domainpartials = array_unique(array_merge(
@@ -132,7 +138,7 @@ class ConfigurationNoticesListener implements EventSubscriberInterface
         ));
 
         foreach ($domainpartials as $partial) {
-            if (strpos($host, $partial) !== false) {
+            if (strpos($host['host'], $partial) !== false) {
                 return;
             }
         }
