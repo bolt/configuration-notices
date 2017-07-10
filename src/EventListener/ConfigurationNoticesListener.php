@@ -123,7 +123,7 @@ class ConfigurationNoticesListener implements EventSubscriberInterface
             return;
         }
 
-        $host = parse_url($request->getHttpHost());
+        $host = parse_url($request->getSchemeAndHttpHost());
 
         // If we have an IP-address, we assume it's "dev"
         if (filter_var($host['host'], FILTER_VALIDATE_IP) !== false) {
