@@ -94,7 +94,7 @@ class ConfigurationNoticesListener implements EventSubscriberInterface
         if (!$this->app['config']->get('general/mailoptions') && $this->app['users']->getCurrentuser() && $this->app['users']->isAllowed('files:config')) {
             $notice = json_encode([
                 'severity' => 1,
-                'notice'   => "The <strong>mail configuration parameters</strong> have not been set up. This may interfere with password resets, and extension functionality. Please set up the <tt>mailoptions</tt> in <tt>config.yml</tt>."
+                'notice'   => "The <strong>mail configuration parameters</strong> have not been set up. This may interfere with password resets, and extension functionality. Please set up the <code>mailoptions</code> in <code>config.yml</code>."
             ]);
             $this->app['logger.flash']->configuration($notice);
         }
@@ -108,7 +108,7 @@ class ConfigurationNoticesListener implements EventSubscriberInterface
         if (!function_exists('imagecreatetruecolor')) {
             $notice = json_encode([
                 'severity' => 1,
-                'notice'   => "The current version of PHP doesn't have the <strong>GD library enabled</strong>. Without this, Bolt will not be able to generate thumbnails. Please enable <tt>php-gd</tt>, or ask your system-administrator to do so."
+                'notice'   => "The current version of PHP doesn't have the <strong>GD library enabled</strong>. Without this, Bolt will not be able to generate thumbnails. Please enable <code>php-gd</code>, or ask your system-administrator to do so."
             ]);
             $this->app['logger.flash']->configuration($notice);
         }
@@ -145,8 +145,8 @@ class ConfigurationNoticesListener implements EventSubscriberInterface
 
         $notice = json_encode([
             'severity' => 2,
-            'notice'   => "It seems like this website is running on a <strong>non-development environment</strong>, while 'debug' is enabled. Make sure debug is disabled in production environments. If you don't do this, it will result in an extremely large <tt>app/cache</tt> folder and a measurable reduced performance across all pages.",
-            'info'     => "If you wish to hide this message, add a key to your <tt>config.yml</tt> with a (partial) domain name in it, that should be seen as a development environment: <tt>debug_local_domains: [ '.foo' ]</tt>."
+            'notice'   => "It seems like this website is running on a <strong>non-development environment</strong>, while 'debug' is enabled. Make sure debug is disabled in production environments. If you don't do this, it will result in an extremely large <code>app/cache</code> folder and a measurable reduced performance across all pages.",
+            'info'     => "If you wish to hide this message, add a key to your <code>config.yml</code> with a (partial) domain name in it, that should be seen as a development environment: <code>debug_local_domains: [ '.foo' ]</code>."
         ]);
 
         $this->app['logger.flash']->configuration($notice);
@@ -177,7 +177,7 @@ class ConfigurationNoticesListener implements EventSubscriberInterface
 
         if (strpos($hostname, '.') === false) {
 
-            $message = "You are using <tt>$hostname</tt> as host name. Some browsers have problems with sessions on hostnames that do not have a <tt>.tld</tt> in them.";
+            $message = "You are using <code>$hostname</code> as host name. Some browsers have problems with sessions on hostnames that do not have a <code>.tld</code> in them.";
             $info = "If you experience difficulties logging on, either configure your webserver to use a hostname with a dot in it, or use another browser.";
 
             $notice = json_encode([
@@ -202,7 +202,7 @@ class ConfigurationNoticesListener implements EventSubscriberInterface
 
         if (filter_var($hostname, FILTER_VALIDATE_IP)) {
 
-            $message = "You are using the <strong>IP address</strong> <tt>$hostname</tt> as host name. This is known to cause problems with sessions.";
+            $message = "You are using the <strong>IP address</strong> <code>$hostname</code> as host name. This is known to cause problems with sessions.";
             $info = "If you experience difficulties logging on, either configure your webserver to use a proper hostname, or use another browser.";
 
             $notice = json_encode([
@@ -230,7 +230,7 @@ class ConfigurationNoticesListener implements EventSubscriberInterface
             $notice = json_encode([
                 'severity' => 1,
                 'notice'   => "You are using Bolt in a subfolder, <strong>instead of the webroot</strong>.",
-                'info'     => "It is recommended to use Bolt from the 'web root', so that it is in the top level. If you wish to use Bolt for only part of a website, we recommend setting up a subdomain like <tt>news.example.org</tt>. If you are having trouble setting up Bolt in the top level, look into the <a href='https://docs.bolt.cm/howto/troubleshooting-outside-webroot#option-2-use-the-flat-structure-distribution'>Flat Structure</a> distribution, or one of the other options listed on that page."
+                'info'     => "It is recommended to use Bolt from the 'web root', so that it is in the top level. If you wish to use Bolt for only part of a website, we recommend setting up a subdomain like <code>news.example.org</code>. If you are having trouble setting up Bolt in the top level, look into the <a href='https://docs.bolt.cm/howto/troubleshooting-outside-webroot#option-2-use-the-flat-structure-distribution'>Flat Structure</a> distribution, or one of the other options listed on that page."
             ]);
 
             $this->app['logger.flash']->configuration($notice);
@@ -246,24 +246,24 @@ class ConfigurationNoticesListener implements EventSubscriberInterface
         $filename = '/configtester_' . date('Y-m-d-h-i-s') . '.txt';
 
         $folders = [
-            ['filesystem' => 'web', 'folder' => 'files', 'name' => '<tt>files/</tt> in the webroot'],
-            ['filesystem' => 'web', 'folder' => 'extensions', 'name' => '<tt>extensions/</tt> in the webroot'],
-            ['filesystem' => 'app', 'folder' => 'config', 'name' => '<tt>app/config/</tt>'],
-            ['filesystem' => 'app', 'folder' => 'cache', 'name' => '<tt>app/cache/</tt>']
+            ['filesystem' => 'files', 'name' => '<code>files/</code> in the webroot'],
+            ['filesystem' => 'extensions', 'name' => '<code>extensions/</code> in the webroot'],
+            ['filesystem' => 'config'],
+            ['filesystem' => 'cache']
         ];
 
         if ($this->app['config']->get('general/database/driver') == "pdo_sqlite") {
-            $folders[] = ['filesystem' => 'app', 'folder' => 'database', 'name' => '<tt>app/cache/</tt>'];
+            $folders[] = ['filesystem' => 'database'];
         }
 
         foreach($folders as $folder) {
-            $mountPoint = $folder['filesystem'];
-            $filePath = $folder['folder'] . $filename;
-            $contents = $this->isWritable($mountPoint, $filePath);
+            $filePath = $filename;
+            $contents = $this->isWritable($folder['filesystem'], $filePath);
             if ($contents != 'ok') {
+                $foldername = $this->getFoldername($folder);
                 $notice = json_encode([
                     'severity' => 1,
-                    'notice'   => "Bolt needs to be able to <strong>write files to</strong> the folder " . $folder['name'] . ", but it doesn't seem to be writable.",
+                    'notice'   => "Bolt needs to be able to <strong>write files to</strong> the folder <code>" . $foldername . "</code>, but it doesn't seem to be writable.",
                     'info'     => "Make sure the folder exists, and is writable to the webserver."
                 ]);
                 $this->app['logger.flash']->configuration($notice);
@@ -285,7 +285,7 @@ class ConfigurationNoticesListener implements EventSubscriberInterface
         if ($contents != 'ok') {
             $notice = json_encode([
                 'severity' => 1,
-                'notice'   => "Bolt is configured to save thumbnails to disk for performance, but the <tt>thumbs/</tt> folder doesn't seem to be writable.",
+                'notice'   => "Bolt is configured to save thumbnails to disk for performance, but the <code>thumbs/</code> folder doesn't seem to be writable.",
                 'info'     => "Make sure the folder exists, and is writable to the webserver."
             ]);
             $this->app['logger.flash']->configuration($notice);
@@ -303,9 +303,9 @@ class ConfigurationNoticesListener implements EventSubscriberInterface
         if (!empty($canonical) && ($hostname != $canonical)) {
             $notice = json_encode([
                 'severity' => 1,
-                'notice'   => "The <tt>canonical hostname</tt> is set to <tt>$canonical</tt> in <tt>config.yml</tt>, but you are currently logged in using another hostname. This might cause issues with uploaded files, or links inserted in the content.",
+                'notice'   => "The <code>canonical hostname</code> is set to <code>$canonical</code> in <code>config.yml</code>, but you are currently logged in using another hostname. This might cause issues with uploaded files, or links inserted in the content.",
                 'info'     => sprintf(
-                    "Log in on Bolt using the proper URL: <tt><a href='%s'>%s</a></tt>.",
+                    "Log in on Bolt using the proper URL: <code><a href='%s'>%s</a></code>.",
                     $this->app['canonical']->getUrl(),
                     $this->app['canonical']->getUrl()
                 )
@@ -322,8 +322,8 @@ class ConfigurationNoticesListener implements EventSubscriberInterface
         if (!extension_loaded('exif') || !function_exists('exif_read_data')) {
             $notice = json_encode([
                 'severity' => 1,
-                'notice'   => "The function <tt>exif_read_data</tt> does not exist, which means that Bolt can not create thumbnail images.",
-                'info'     => "Make sure the <tt>php-exif</tt> extension is enabled and/or compiled into your PHP setup. See <a href='http://php.net/manual/en/exif.installation.php'>here</a>."
+                'notice'   => "The function <code>exif_read_data</code> does not exist, which means that Bolt can not create thumbnail images.",
+                'info'     => "Make sure the <code>php-exif</code> extension is enabled and/or compiled into your PHP setup. See <a href='http://php.net/manual/en/exif.installation.php'>here</a>."
             ]);
             $this->app['logger.flash']->configuration($notice);
         }
@@ -331,8 +331,8 @@ class ConfigurationNoticesListener implements EventSubscriberInterface
         if (!extension_loaded('fileinfo') || !class_exists('finfo')) {
             $notice = json_encode([
                 'severity' => 1,
-                'notice'   => "The class <tt>finfo</tt> does not exist, which means that Bolt can not create thumbnail images.",
-                'info'     => "Make sure the <tt>fileinfo</tt> extension is enabled and/or compiled into your PHP setup. See <a href='http://php.net/manual/en/fileinfo.installation.php'>here</a>."
+                'notice'   => "The class <code>finfo</code> does not exist, which means that Bolt can not create thumbnail images.",
+                'info'     => "Make sure the <code>fileinfo</code> extension is enabled and/or compiled into your PHP setup. See <a href='http://php.net/manual/en/fileinfo.installation.php'>here</a>."
             ]);
             $this->app['logger.flash']->configuration($notice);
         }
@@ -340,8 +340,8 @@ class ConfigurationNoticesListener implements EventSubscriberInterface
         if (!extension_loaded('gd') || !function_exists('gd_info')) {
             $notice = json_encode([
                 'severity' => 1,
-                'notice'   => "The function <tt>gd_info</tt> does not exist, which means that Bolt can not create thumbnail images.",
-                'info'     => "Make sure the <tt>gd</tt> extension is enabled and/or compiled into your PHP setup. See <a href='http://php.net/manual/en/image.installation.php'>here</a>."
+                'notice'   => "The function <code>gd_info</code> does not exist, which means that Bolt can not create thumbnail images.",
+                'info'     => "Make sure the <code>gd</code> extension is enabled and/or compiled into your PHP setup. See <a href='http://php.net/manual/en/image.installation.php'>here</a>."
             ]);
             $this->app['logger.flash']->configuration($notice);
         }
@@ -356,7 +356,7 @@ class ConfigurationNoticesListener implements EventSubscriberInterface
             $notice = json_encode([
                 'severity' => 1,
                 'notice'   => "Bolt's <strong>maintenance mode</strong> is enabled. This means that non-authenticated users will not be able to see the website.",
-                'info'     => "To make the site available to the general public again, set <tt>maintenance_mode: false</tt> in your <tt>config.yml</tt> file."
+                'info'     => "To make the site available to the general public again, set <code>maintenance_mode: false</code> in your <code>config.yml</code> file."
             ]);
             $this->app['logger.flash']->configuration($notice);
         }
@@ -455,6 +455,22 @@ class ConfigurationNoticesListener implements EventSubscriberInterface
         }
 
         return $contents;
+    }
+
+    /**
+     * @param array $folder
+     * 
+     * @return string
+     */
+    private function getFolderName($folder)
+    {
+        if (isset($folder['name'])) {
+            return $folder['name'];
+        }
+        /** @var \Bolt\Filesystem\FilesystemInterface $fs */
+        $fs = $this->app['filesystem']->getFilesystem($folder['filesystem']);
+
+        return sprintf('%s://', $fs->getMountPoint());
     }
 
     /**
