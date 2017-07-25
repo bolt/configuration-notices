@@ -243,27 +243,26 @@ class ConfigurationNoticesListener implements EventSubscriberInterface
      */
     protected function writableFolderCheck()
     {
-        $filename = '/configtester_' . date('Y-m-d-h-i-s') . '.txt';
+        $fileName = '/configtester_' . date('Y-m-d-h-i-s') . '.txt';
 
-        $folders = [
-            ['filesystem' => 'files', 'name' => '<code>files/</code> in the webroot'],
-            ['filesystem' => 'extensions', 'name' => '<code>extensions/</code> in the webroot'],
-            ['filesystem' => 'config'],
-            ['filesystem' => 'cache']
+        $fileSystems = [
+            ['name' => 'files', 'folder' => '', 'label' => '<code>files/</code> in the webroot'],
+            ['name' => 'extensions', 'folder' => '', 'label' => '<code>extensions/</code> in the webroot'],
+            ['name' => 'config', 'folder' => ''],
+            ['name' => 'cache', 'folder' => '']
         ];
 
         if ($this->app['config']->get('general/database/driver') == "pdo_sqlite") {
-            $folders[] = ['filesystem' => 'database'];
+            $fileSystems[] = ['name' => 'app', 'folder' => 'database'];
         }
 
-        foreach($folders as $folder) {
-            $filePath = $filename;
-            $contents = $this->isWritable($folder['filesystem'], $filePath);
+        foreach($fileSystems as $fileSystem) {
+            $contents = $this->isWritable($fileSystem, $fileName);
             if ($contents != 'ok') {
-                $foldername = $this->getFoldername($folder);
+                $folderName = $this->getFoldername($fileSystem);
                 $notice = json_encode([
                     'severity' => 1,
-                    'notice'   => "Bolt needs to be able to <strong>write files to</strong> the folder <code>" . $foldername . "</code>, but it doesn't seem to be writable.",
+                    'notice'   => "Bolt needs to be able to <strong>write files to</strong> the folder <code>" . $folderName . "</code>, but it doesn't seem to be writable.",
                     'info'     => "Make sure the folder exists, and is writable to the webserver."
                 ]);
                 $this->app['logger.flash']->configuration($notice);
@@ -436,15 +435,17 @@ class ConfigurationNoticesListener implements EventSubscriberInterface
     }
 
     /**
-     * @param string $mountPoint
+     * @param string $fileSystem
      * @param string $filePath
      *
      * @return bool|string
      */
-    private function isWritable($mountPoint, $filePath)
+    private function isWritable($fileSystem, $filePath)
     {
         /** @var \Bolt\Filesystem\FilesystemInterface $fs */
-        $fs = $this->app['filesystem']->getFilesystem($mountPoint);
+        $fs = $this->app['filesystem']->getFilesystem($fileSystem['name']);
+
+        $filePath = $fileSystem['folder'] . '/' . $filePath;
 
         try {
             $fs->put($filePath, 'ok');
@@ -458,19 +459,17 @@ class ConfigurationNoticesListener implements EventSubscriberInterface
     }
 
     /**
-     * @param array $folder
-     * 
+     * @param array $fileSystem
+     *
      * @return string
      */
-    private function getFolderName($folder)
+    private function getFolderName($fileSystem)
     {
-        if (isset($folder['name'])) {
-            return $folder['name'];
+        if (isset($fileSystem['label'])) {
+            return $fileSystem['label'];
         }
-        /** @var \Bolt\Filesystem\FilesystemInterface $fs */
-        $fs = $this->app['filesystem']->getFilesystem($folder['filesystem']);
 
-        return sprintf('%s://', $fs->getMountPoint());
+        return sprintf('%s://%s', $fileSystem['name'], $fileSystem['folder']);
     }
 
     /**
