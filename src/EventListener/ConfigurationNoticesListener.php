@@ -279,8 +279,8 @@ class ConfigurationNoticesListener implements EventSubscriberInterface
             return;
         }
 
-        $filePath = '/thumbs/configtester_' . date('Y-m-d-h-i-s') . '.txt';
-        $contents = $this->isWritable('web', $filePath);
+        $filePath = 'configtester_' . date('Y-m-d-h-i-s') . '.txt';
+        $contents = $this->isWritable(['name' => 'web', 'folder' => 'thumbs'], $filePath);
         if ($contents != 'ok') {
             $notice = json_encode([
                 'severity' => 1,
