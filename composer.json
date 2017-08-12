@@ -23,7 +23,8 @@
     ],
     "minimum-stability": "stable",
     "require": {
-        "bolt/bolt": "^3.3"
+        "bolt/bolt": "^3.3",
+        "bolt/collection": "^1.1"
     },
     "autoload": {
         "psr-4": {
