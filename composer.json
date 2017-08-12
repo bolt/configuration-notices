@@ -13,6 +13,10 @@
     "license": "MIT",
     "authors": [
         {
+            "name": "Bob den Otter",
+            "email": "bob@twokings.nl"
+        },
+        {
             "name": "Gawain Lynch",
             "email": "gawain.lynch@gmail.com"
         }
