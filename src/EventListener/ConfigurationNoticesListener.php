@@ -131,7 +131,7 @@ class ConfigurationNoticesListener implements EventSubscriberInterface
             return;
         }
 
-        $domainPartials = (array) $this->app['config']->get('general/configuration_notices/local_domains', []);
+        $domainPartials = (array) $this->app['config']->get('general/debug_local_domains', []);
 
         $domainPartials = array_unique(array_merge(
             (array) $domainPartials,
