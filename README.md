@@ -18,8 +18,9 @@ composer require bolt/configuration-notices
 You can influence a few of the checks through the configuration. How meta!
 
 ```yaml
+debug_local_domains: [ '.localhost' ]
+
 configuration_notices:
-    local_domains: [ '.localhost' ]
     log_threshold: 1000
 ```
 
